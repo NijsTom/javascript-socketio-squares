@@ -15,13 +15,6 @@ app.get('/', function(req, res) {
 
 io.sockets.on('connection', function(socket) {
     connections.push(socket)
-    users.push({
-        id:socket.id,
-        posx:0,
-        posy:0,
-        color: getRandomColor()
-    });
-    updateUsers();
 
     console.log('Connected: %s sockets connected', connections.length)
 
@@ -32,6 +25,18 @@ io.sockets.on('connection', function(socket) {
         updateUsers();
         console.log('Disconnected: %s sockets connected', connections.length)
     })
+
+    socket.on("new user", function(data) {
+        users.push({
+            id:socket.id,
+            posx:0,
+            posy:0,
+            color: getRandomColor(),
+            username: data
+        });
+        updateUsers();
+        console.log("new user boys" + data);
+    });
 
     socket.on('left', function() {
         var user = fetchUser(socket.id);

@@ -15,9 +15,23 @@
 
 
         <script src="/socket.io/socket.io.js"></script>
+
+        <style>
+            #game {
+                display:none;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
+            <div id="setup">
+                <form id="userForm">
+                    <label>Enter a username: </label>
+                    <input type="text" id="username" class="form-control"/>
+                    <br/>
+                    <input type="submit" class="btn btn-primary" value="Go"/>
+                </form>
+            </div>
             <div id="game">
                 <ul id="users" class="list-group"></ul>
                 <canvas id="canvas" width="1000" height="500" style="border:1px solid #000000;"></canvas>
@@ -30,15 +44,20 @@
                 var socket = io.connect();
                 var canvas = document.getElementById("canvas");
                 var ctx = canvas.getContext("2d");
-
-
                 var userList = [];
+
+                $("#userForm").submit(function(e) {
+                    e.preventDefault();
+                    socket.emit("new user", $("#username").val());
+                    $("#userForm").hide();
+                    $("#game").show();
+                });
 
                 socket.on("get users", function(users) {
                     userList = users;
                     var html = "";
                     for (var i = 0; i < users.length; i++) {
-                        html += "<li class='list-group-item'>" + users[i].id + "</li>";
+                        html += "<li class='list-group-item'>" + users[i].username + "</li>";
                     }
                     $("#users").html(html);
                 });
@@ -60,10 +79,19 @@
 
                 function draw() {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    var self = {};
+                    // Loop over users and draw everyone
                     for (var user of userList) {
                         ctx.fillStyle = user.color;
                         ctx.fillRect(user.posx, user.posy, 100, 100);
+
+                        // Check for self, always draw self last
+                        if (user.id === socket.id) { self = user; }
                     }
+                    // Draw self
+                    ctx.fillStyle = self.color;
+                    ctx.fillRect(self.posx, self.posy, 100, 100);
+                    console.log(socket.id);
                 }
 
                 var FPS = 50;
